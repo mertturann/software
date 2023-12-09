@@ -2,6 +2,13 @@ import os
 import pandas as pd, re
 from datetime import datetime
 
+
+def getcurrentime():
+    c = datetime.now()
+    current_time = c.strftime('%H:%M')
+    return str(current_time)
+
+
 def sort_folders(folders):
     def natural_keys(text):
         def atoi(text):
@@ -40,3 +47,11 @@ def get_layers(file_path):
     except Exception as e:
         print(f"Excel Layer Tespit Edilirken Hata oluştu: {e}")
         return []
+    
+def check_files(file_name, folder):
+    for files in os.walk(folder):
+        if file_name in files:
+            print ("Dosya Mevcut: {folder} {file_name}")
+            return True
+        else: 
+            return None

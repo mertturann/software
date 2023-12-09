@@ -2,9 +2,9 @@ import sys, os
 from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QListWidget, QListWidget, QRadioButton, QFileDialog
 from PyQt6.QtCore import QFile
 from PyQt6.QtGui import QIcon
-from functions import list_folders, list_files, get_layers
+from functions import list_folders, list_files, get_layers, getcurrentime, check_files
 from PyQt6.uic import loadUi
-
+from draw import multi_analysis, draw_combined_graph, draw_test
 class MyWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -26,23 +26,25 @@ class MyWindow(QMainWindow):
         self.deprem = self.findChild(QListWidget, "listWidget_2")
         self.layer = self.findChild(QListWidget, "listWidget_3")
         self.browse = self.findChild(QPushButton, "pushButton")
-        self.run = self.findChild(QPushButton, "pushButton_2")
+        self.draw = self.findChild(QPushButton, "pushButton_2")
         self.radio_analiz = self.findChild(QRadioButton, "radioButton_2")
         self.radio_deprem = self.findChild(QRadioButton, "radioButton")
         self.radio_layer = self.findChild(QRadioButton, "radioButton_3")
+        
 
 
     def interactions(self):
+            self.trigger_radio()
             self.browse.clicked.connect(self.browsedir)
             self.analiz.currentItemChanged.connect(self.init_analiz)
             self.deprem.currentItemChanged.connect(self.init_layer)
             self.radio_analiz.clicked.connect(self.trigger_radio)
             self.radio_deprem.clicked.connect(self.trigger_radio)
             self.radio_layer.clicked.connect(self.trigger_radio)
+            self.draw.clicked.connect(self.draw_multi_analysis)
                 
     def trigger_radio(self):
         if self.radio_analiz.isChecked():
-            print("ANALiz")
             self.deprem.clear()
             self.layer.clear()
             self.analiz.setSelectionMode(QListWidget.SelectionMode.MultiSelection)
@@ -68,10 +70,29 @@ class MyWindow(QMainWindow):
 
     def browsedir(self):
         self.analiz.clear()
-        HOME_PATH = os.path.expanduser('~\Documents\DEEPSOIL 7')
+        HOME_PATH = os.path.expanduser('~\\Documents\\DEEPSOIL 7')
         self.browse = QFileDialog.getExistingDirectory(self,directory=HOME_PATH)
         folders = list_folders(self.browse)
         self.analiz.addItems(folders)
+
+    def draw_multi_analysis(self):
+        time = getcurrentime()
+        dirs = []
+        labels = []
+        layer = (self.layer.selectedItems()[0]).text()
+        deprem = (self.deprem.selectedItems()[0]).text()
+        selected_items = self.analiz.selectedItems()
+        basedir = self.browse
+        for item in selected_items:
+            if not check_files(folder=f"{basedir}/{item.text()}",file_name=deprem):
+                print("error")
+            else:    
+                dirs.append(f"{basedir}/{item.text()}")
+               
+        for label in selected_items:
+            labels.append(label.text())
+        y, input_motion = multi_analysis(folders=dirs,deprem=deprem,layer=layer,column="PSA (g)")
+        draw_test(y_values=y,graphname="tim",title=deprem,input_motion=input_motion,dirname="new",labels=labels) 
 
     
     def init_analiz(self):
