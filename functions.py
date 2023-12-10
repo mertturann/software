@@ -4,10 +4,11 @@ from datetime import datetime
 
 
 def getcurrentime():
-    c = datetime.now()
-    current_time = c.strftime('%H:%M')
-    return str(current_time)
+    mevcut_zaman = datetime.now()
 
+    # Saat, dakika ve saniye değerlerini alarak string olarak formatlama
+    zaman_str = "{:%H%M%S}".format(mevcut_zaman)
+    return zaman_str
 
 def sort_folders(folders):
     def natural_keys(text):
@@ -48,10 +49,7 @@ def get_layers(file_path):
         print(f"Excel Layer Tespit Edilirken Hata oluştu: {e}")
         return []
     
-def check_files(file_name, folder):
-    for files in os.walk(folder):
-        if file_name in files:
-            print ("Dosya Mevcut: {folder} {file_name}")
-            return True
-        else: 
-            return None
+
+def check_files(folder, file):
+    dosya_yolu = os.path.join(folder, file)
+    return os.path.isfile(dosya_yolu)
