@@ -16,6 +16,16 @@ def getperiod():
         return f"Period dosyası bulunamadı."
     except Exception as e:
         return f"Hata oluştu: {e}"
+    
+def get_sae(sae: str):
+    try:
+        excel_data = pd.read_excel("period.xlsx", sheet_name="Sayfa1")
+        selected_column = excel_data[sae].dropna().tolist()
+        return selected_column
+    except FileNotFoundError:
+        return f"{sae.capitalize()} dosyası bulunamadı."
+    except Exception as e:
+        return f"Hata oluştu: {e}"
 
 
 def multi_analysis(folders, deprem, layer, column):
@@ -52,8 +62,7 @@ def draw_combined_graph(y_values,graphname: str, title: str,dirname: str,input_m
 
     for idx, y_data in enumerate(y_values):
         plt.plot(x_values, y_data,linestyle='--' ,marker='.' ,label=f"A{index+idx}")
-    plt.plot(x_values,input_motion,marker='*',label = "Input Motion")    
-
+    
 
     plt.xlabel("Periyot (X)")
     plt.ylabel("PSA (g) (y)")
@@ -65,7 +74,7 @@ def draw_combined_graph(y_values,graphname: str, title: str,dirname: str,input_m
 
     
 
-def draw_test(y_values,graphname: str, title: str,input_motion,labels):
+def draw_test(y_values,graphname: str, title: str,input_motion,labels, motion=False):
     label = labels
     x_values = getperiod()
     plt.figure(figsize=(15, 9))
@@ -74,9 +83,8 @@ def draw_test(y_values,graphname: str, title: str,input_motion,labels):
     #plt.ylim(bottom=0,top=1.75)
     for idx, y_data in enumerate(y_values,start=0):
         plt.plot(x_values, y_data,label=labels[idx])
-        
-    print(input_motion)    
-    plt.plot(x_values,input_motion,label="Input Motion")    
+    if motion:        
+        plt.plot(x_values,input_motion,label="Input Motion")    
     plt.xlabel("Periyot (X)")
     plt.ylabel("PSA (g) (y)")
     plt.title(str(title))
@@ -105,8 +113,35 @@ def multi_deprem(folder_path, file_names, sheet_name, column_name):
     print ("başarılı")
     return all_values
 
- 
- 
+def multi_layer(folder, sheet_name, column_name, motion = False):
+    all_values = []
+
+    # Verilen klasördeki her dosya için işlem yap
+    
+    file_path = os.path.join(folder)
+
+    # Excel dosyasını oku
+    for sheet in sheet_name:
+        try:
+            excel_data = pd.read_excel(file_path, sheet_name=sheet)
+            if column_name in excel_data.columns:
+                values = excel_data[column_name].dropna().tolist()
+                all_values.append(values)
+        except Exception as e:
+            print(f"Hata: {folder} dosyasında okuma sırasında bir hata oluştu - {e}")
+        print ("başarılı")
+    if motion == True:
+        try:
+            excel_data = pd.read_excel(file_path,sheet_name="Input Motion",header=1)
+            if "PSA (g)" in excel_data.columns:
+                values = excel_data["PSA (g)"].dropna().tolist()
+                all_values.append(values)
+                print ("başarılı input motion")    
+
+        except Exception as e:
+            print(f"Hata: {folder} dosyasında okuma sırasında bir hata oluştu - {e}")
+    return all_values
+    
 def draw_deprem(y_values,graphname: str, title: str,labels):
     label = labels
     x_values = getperiod()
@@ -124,3 +159,22 @@ def draw_deprem(y_values,graphname: str, title: str,labels):
     plt.legend()
     plt.savefig(f"sonuclar/{graphname}")
     plt.close()   
+    
+def draw_layer(y_values,graphname: str, title: str,labels, motion = False):
+    label = labels
+    x_values = getperiod()
+    plt.figure(figsize=(15, 9))
+    plt.xscale('log')  # Y eksenini logaritmik ölçekte gösterme
+    plt.tight_layout()
+    #plt.ylim(bottom=0,top=1.75)
+    for idx, y_data in enumerate(y_values,start=0):
+        plt.plot(x_values, y_data,label=labels[idx])
+        
+    plt.xlabel("Periyot (X)")
+    plt.ylabel("PSA (g) (y)")
+    plt.title(str(title))
+    plt.tight_layout()
+    plt.legend()
+    plt.savefig(f"sonuclar/{graphname}")
+    plt.close()   
+
