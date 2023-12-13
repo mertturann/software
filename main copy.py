@@ -1,20 +1,18 @@
-import sys,os
+import sys
+import os
 from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QListWidget, QRadioButton, QFileDialog, QMessageBox, QCheckBox
 from PyQt6.QtGui import QIcon
-from functions import list_folders, list_files, get_layers, getcurrentime, check_files, excel_sheet_check
-#from PyQt6.uic import loadUi
-from mainwindow import Ui_MainWindow
-from draw import multi_analysis, draw_test, multi_deprem, draw_deprem, multi_layer, get_sae, check_sonuclar_folder
+from functions import list_folders, list_files, get_layers, getcurrentime, check_files
+from PyQt6.uic import loadUi
+from draw import multi_analysis, draw_combined_graph, draw_test, multi_deprem, draw_deprem, multi_layer, get_sae
 
 class MyWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.ui = Ui_MainWindow()
-        self.ui.setupUi(self)
-    
-        icon_path = os.path.join(sys._MEIPASS, 'icon.png')
-        self.setWindowIcon(QIcon(icon_path))
-        #self.setWindowIcon(QIcon("icon.png"))
+
+        loadUi("main.ui", self)
+
+        self.setWindowIcon(QIcon("icon.png")) 
         self.setWindowTitle("DeepSoil Analiz")
         self.initUiElements()
         self.interactions()
@@ -72,7 +70,7 @@ class MyWindow(QMainWindow):
         
     def trigger_radio(self):
         if self.radio_analiz.isChecked():
-            QMessageBox.information(self, "Bilgi", "Analiz Modundasınız.\nPeriod.xlsx Dosyası Exe İle Aynı Dizinde Olmalıdır.")
+            QMessageBox.information(self, "Bilgi", "Analiz Modundasınız, Bu modda birden çok analiz, bir deprem, bir layer seçebilirsiniz.")
             self.checkbox_input_motion.setDisabled(False)
             self.deprem.clear()
             self.layer.clear()
@@ -99,15 +97,11 @@ class MyWindow(QMainWindow):
             QMessageBox.critical(self,"HATA","MOD SEÇİMİNDE BİR HATA OLUŞTU") 
 
     def browsedir(self):
-        check_sonuclar_folder()
         self.analiz.clear()
-        HOME_PATH = os.path.expanduser('~\\Documents')
+        HOME_PATH = os.path.expanduser('~\\Documents\\DEEPSOIL 7')
         self.browse = QFileDialog.getExistingDirectory(self, directory=HOME_PATH)
-        if self.browse:
-            folders = list_folders(self.browse)
-            self.analiz.addItems(folders)
-        else:
-            return    
+        folders = list_folders(self.browse)
+        self.analiz.addItems(folders)
 
     def run(self):
         if self.radio_analiz.isChecked():
@@ -126,18 +120,11 @@ class MyWindow(QMainWindow):
         selected_items = self.analiz.selectedItems()
         basedir = self.browse
         for item in selected_items:
-            if check_files(folder=f"{basedir}/{item.text()}", file=deprem):
-                if excel_sheet_check(f"{basedir}/{item.text()}/{deprem}",layer):
-                    dirs.append(f"{basedir}/{item.text()}")     
-                else:
-                    QMessageBox.critical(self, "Hata", f"{basedir}/{item.text()} Dizininde {deprem} dosyasında {layer} yok ANALİZ BAŞLAMAYACAK.")
-                    return
-
-            else:
-                 QMessageBox.critical(self, "Hata", f"{basedir}/{item.text()} Dizininde {deprem} dosyası yok ANALİZ BAŞLAMAYACAK.")
-                 return
-    
-                       
+            if not check_files(folder=f"{basedir}/{item.text()}", file=deprem):
+                QMessageBox.critical(self, "Hata", f"{basedir}/{item.text()} Dizininde {deprem} dosyası yok. ANALİZ BAŞLAMAYACAK.")
+                return
+            else:    
+                dirs.append(f"{basedir}/{item.text()}")               
         for label in selected_items:
             labels.append(label.text())
         sae_values, sae_labels = self.if_checkbox()

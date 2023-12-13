@@ -53,3 +53,26 @@ def get_layers(file_path):
 def check_files(folder, file):
     dosya_yolu = os.path.join(folder, file)
     return os.path.isfile(dosya_yolu)
+
+
+def excel_sheet_check(excel_yolu, sayfa_adi):
+    try:
+        # Excel dosyasını oku
+        excel = pd.ExcelFile(excel_yolu)
+
+        # Dosyadaki mevcut sayfaları al
+        mevcut_sayfalar = excel.sheet_names
+
+        # Belirtilen sayfanın mevcut sayfalar arasında olup olmadığını kontrol et
+        if sayfa_adi in mevcut_sayfalar:
+            return True
+        else:
+            print(f"'{sayfa_adi}' adında bir sayfa bulunamadı.")
+            return False
+    except FileNotFoundError:
+        print(f"Hata: {excel_yolu}{sayfa_adi} dosyası bulunamadı veya dosya yolu geçersiz.")
+        return False
+    except Exception as e:
+        print(f"Hata: {e}")
+        return False
+

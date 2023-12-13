@@ -1,12 +1,25 @@
 import pandas as pd, os
 import matplotlib.pyplot as plt
-from openpyxl import Workbook
-from openpyxl.chart import (
-    ScatterChart,
-    Reference,
-    Series,
-)
 
+def check_sonuclar_folder():
+    # Mevcut çalışma dizinini al
+    mevcut_dizin = os.getcwd()
+
+    # Belirtilen klasör adını içeren dosya yolunu oluştur
+    klasor_yolu = os.path.join(mevcut_dizin, "sonuclar")
+
+    # Klasörün var olup olmadığını kontrol et
+    if not os.path.exists(klasor_yolu):
+        # Klasör yoksa oluştur
+        try:
+            os.makedirs(klasor_yolu)
+            print(f"Sonuçlar klasörü oluşturuldu.")
+        except OSError as e:
+            print(f"Hata: Sonuçlar klasörü oluşturulamadı - {e}")
+    else:
+        print(f"Sonuçlar klasörü zaten var.")
+
+    
 def getperiod():
     try:
         excel_data = pd.read_excel("period.xlsx", sheet_name="Sayfa1")
@@ -44,33 +57,12 @@ def multi_analysis(folders, deprem, layer, column):
                     input_motion.append(input)
                 
                 except Exception as e:
-                    print(f"{deprem} dosyasını okuma sırasında hata oluştu: {e}")
+                    print(f"MULTİ ANALYSİS {deprem} dosyasını okuma sırasında hata oluştu: {e}")
+                    
         else:
             print(f"{deprem} dosyası bulunamadı: {folder}")
        
     return all_y_values, input_motion[0]
-
-
-def draw_combined_graph(y_values,graphname: str, title: str,dirname: str,input_motion):
-    x_values = getperiod()
-    plt.figure(figsize=(15, 9))
-    plt.xlim(0,3)
-    plt.tight_layout()
-    #plt.ylim(bottom=0,top=1.75)
-
-    index = 1
-
-    for idx, y_data in enumerate(y_values):
-        plt.plot(x_values, y_data,linestyle='--' ,marker='.' ,label=f"A{index+idx}")
-    
-
-    plt.xlabel("Periyot (X)")
-    plt.ylabel("PSA (g) (y)")
-    plt.title(str(title))
-    plt.tight_layout()
-    plt.legend()
-    plt.savefig(f"sonuclar/{dirname}/{graphname}")
-    plt.close()
 
     
 
@@ -82,7 +74,7 @@ def draw_test(y_values,graphname: str, title: str,input_motion,labels, motion=Fa
     plt.tight_layout()
     #plt.ylim(bottom=0,top=1.75)
     for idx, y_data in enumerate(y_values,start=0):
-        plt.plot(x_values, y_data,label=labels[idx])
+        plt.plot(x_values, y_data,label=label[idx])
     if motion:        
         plt.plot(x_values,input_motion,label="Input Motion")    
     plt.xlabel("Periyot (X)")
@@ -108,9 +100,10 @@ def multi_deprem(folder_path, file_names, sheet_name, column_name):
             if column_name in excel_data.columns:
                 values = excel_data[column_name].dropna().tolist()
                 all_values.append(values)
+                print (f"{file_name} {column_name} başarılı")
         except Exception as e:
-            print(f"Hata: {file_name} dosyasında okuma sırasında bir hata oluştu - {e}")
-    print ("başarılı")
+            print(f"Hata: {file_name} dosyasında okuma sırasında bir hata oluştu multi_deprem- {e}")
+    
     return all_values
 
 def multi_layer(folder, sheet_name, column_name, motion = False):
@@ -127,9 +120,10 @@ def multi_layer(folder, sheet_name, column_name, motion = False):
             if column_name in excel_data.columns:
                 values = excel_data[column_name].dropna().tolist()
                 all_values.append(values)
+                print (f"{file_path} {sheet} başarılı")
         except Exception as e:
-            print(f"Hata: {folder} dosyasında okuma sırasında bir hata oluştu - {e}")
-        print ("başarılı")
+            print(f"Hata: {folder} dosyasında okuma sırasında bir hata oluştu multi_layer- {e}")
+        
     if motion == True:
         try:
             excel_data = pd.read_excel(file_path,sheet_name="Input Motion",header=1)
@@ -168,7 +162,7 @@ def draw_layer(y_values,graphname: str, title: str,labels, motion = False):
     plt.tight_layout()
     #plt.ylim(bottom=0,top=1.75)
     for idx, y_data in enumerate(y_values,start=0):
-        plt.plot(x_values, y_data,label=labels[idx])
+        plt.plot(x_values, y_data,label=label[idx])
         
     plt.xlabel("Periyot (X)")
     plt.ylabel("PSA (g) (y)")
